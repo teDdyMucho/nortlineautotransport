@@ -6,9 +6,10 @@ import { getLocalOrderById, listLocalOrders, updateLocalOrderPaymentStatus } fro
 
 interface LocalOrdersProps {
   onBack: () => void;
+  embed?: boolean; // when true, do not render the internal top back/header section
 }
 
-export default function LocalOrders({ onBack }: LocalOrdersProps) {
+export default function LocalOrders({ onBack, embed = false }: LocalOrdersProps) {
   const isLocalDev = import.meta.env.DEV && window.location.hostname === 'localhost';
 
   const [searchId, setSearchId] = useState('');
@@ -32,16 +33,16 @@ export default function LocalOrders({ onBack }: LocalOrdersProps) {
       setOrdersError(null);
       try {
         const local = listLocalOrders();
-        setOrders(
-          local.map((o) => ({
+        const mapped = local.map((o) => ({
             id: o.id,
             order_code: o.id,
             status: o.status,
             payment_status: (o.payment_status ?? 'unpaid') as DbOrderRow['payment_status'],
             created_at: o.created_at,
             updated_at: o.updated_at,
-          }))
-        );
+          }));
+        mapped.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+        setOrders(mapped);
       } catch {
         setOrders([]);
       }
@@ -62,6 +63,9 @@ export default function LocalOrders({ onBack }: LocalOrdersProps) {
       .then((rows) => {
         if (!active) return;
         setOrders(rows);
+        // default-select newest (rows already ordered desc by created_at in listMyOrders)
+        // selection will only happen if user hasn't selected one yet
+        setSelectedId((prev) => (prev ? prev : rows[0]?.id ?? null));
       })
       .catch((err) => {
         if (!active) return;
@@ -76,6 +80,13 @@ export default function LocalOrders({ onBack }: LocalOrdersProps) {
       active = false;
     };
   }, [isLocalDev]);
+
+  // When orders list changes and nothing is selected yet, select the most recent
+  useEffect(() => {
+    if (!selectedId && orders.length > 0) {
+      setSelectedId(orders[0].id);
+    }
+  }, [orders, selectedId]);
 
   const selectedOrder = useMemo(() => {
     const id = String(selectedId ?? '').trim();
@@ -219,20 +230,27 @@ export default function LocalOrders({ onBack }: LocalOrdersProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onBack}
-            className="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </button>
-          <div>
+        {embed ? (
+          <div className="mb-2">
             <div className="text-lg sm:text-xl font-bold text-gray-900">Tracking</div>
             <div className="text-xs sm:text-sm text-gray-600">Track your order status.</div>
           </div>
-        </div>
+        ) : (
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={onBack}
+              className="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </button>
+            <div>
+              <div className="text-lg sm:text-xl font-bold text-gray-900">Tracking</div>
+              <div className="text-xs sm:text-sm text-gray-600">Track your order status.</div>
+            </div>
+          </div>
+        )}
 
         <div className="mt-5 grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           <div className="lg:col-span-1">

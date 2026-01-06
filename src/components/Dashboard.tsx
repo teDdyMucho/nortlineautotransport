@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { FileText, LogOut, Package, User, Clock } from 'lucide-react';
+import { FileText, LogOut, Package, User, Clock, Home } from 'lucide-react';
 import FileUploadSection from './FileUploadSection';
 import { supabase } from '../lib/supabaseClient';
 import LocalOrders from './LocalOrders';
@@ -25,6 +25,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [showReceiptHistory, setShowReceiptHistory] = useState(false);
   const [showOrders, setShowOrders] = useState(false);
   const [isDraftsOpen, setIsDraftsOpen] = useState(false);
+  const [showDrafts, setShowDrafts] = useState(false);
   const [drafts, setDrafts] = useState<CheckoutDraft[]>([]);
 
   const loadDrafts = () => {
@@ -137,14 +138,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     }
     onLogout();
   };
-
-  if (showReceiptHistory) {
-    return <ReceiptHistory onBack={() => setShowReceiptHistory(false)} />;
-  }
-
-  if (showOrders) {
-    return <LocalOrders onBack={() => setShowOrders(false)} />;
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -293,7 +286,23 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               </div>
               <button
                 type="button"
-                onClick={() => setShowOrders(true)}
+                onClick={() => {
+                  setShowOrders(false);
+                  setShowReceiptHistory(false);
+                  setShowDrafts(false);
+                }}
+                className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 rounded-lg text-gray-600 hover:text-cyan-500 hover:bg-cyan-50 transition-all"
+              >
+                <Home className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="hidden sm:inline text-sm">Home</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowOrders(true);
+                  setShowReceiptHistory(false);
+                  setShowDrafts(false);
+                }}
                 className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 rounded-lg text-gray-600 hover:text-cyan-500 hover:bg-cyan-50 transition-all"
               >
                 <Package className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -301,7 +310,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               </button>
               <button
                 type="button"
-                onClick={() => setShowReceiptHistory(true)}
+                onClick={() => {
+                  setShowReceiptHistory(true);
+                  setShowOrders(false);
+                  setShowDrafts(false);
+                }}
                 className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 rounded-lg text-gray-600 hover:text-cyan-500 hover:bg-cyan-50 transition-all"
               >
                 <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -311,7 +324,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 type="button"
                 onClick={() => {
                   loadDrafts();
-                  setIsDraftsOpen(true);
+                  setShowDrafts(true);
+                  setShowReceiptHistory(false);
+                  setShowOrders(false);
                 }}
                 className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 rounded-lg text-gray-600 hover:text-cyan-500 hover:bg-cyan-50 transition-all"
               >
@@ -336,18 +351,98 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       </nav>
 
       <div className="flex-1 w-full">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-        <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-4 sm:p-6">
-          <FileUploadSection
-            onContinueToSignIn={() => {
-              setIsLogoutOpen(true);
-            }}
-          />
-        </div>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          {showReceiptHistory ? (
+            <ReceiptHistory embed onBack={() => setShowReceiptHistory(false)} />
+          ) : showOrders ? (
+            <LocalOrders embed onBack={() => setShowOrders(false)} />
+          ) : showDrafts ? (
+            <div className="rounded-2xl bg-white border border-gray-200 shadow-sm">
+              <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-100 flex items-center justify-start">
+                <div>
+                  <div className="text-base sm:text-lg font-semibold text-gray-900">Drafts</div>
+                  <div className="text-xs sm:text-sm text-gray-600">Pending payments saved from checkout</div>
+                </div>
+              </div>
+              <div className="px-4 sm:px-6 py-4 sm:py-5">
+                {drafts.length === 0 ? (
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">No drafts yet.</div>
+                ) : (
+                  <div className="space-y-3">
+                    {drafts.map((d) => {
+                      const created = new Date(d.createdAt);
+                      const costData = (d as any)?.costData as any;
+                      const formData = (d as any)?.formData as any;
+                      const pricingCity = costData && typeof costData.pricingCity === 'string' ? costData.pricingCity : null;
+                      const dropoffLocation = formData && typeof formData === 'object' && formData?.dropoff_location ? formData.dropoff_location : null;
+                      const serviceArea = dropoffLocation && typeof dropoffLocation.service_area === 'string' ? dropoffLocation.service_area : null;
+                      const label = pricingCity ? String(pricingCity) : serviceArea ? String(serviceArea) : '-';
+                      const costValue = costData && typeof costData.cost === 'number' ? costData.cost : null;
+                      const total = typeof costValue === 'number' && Number.isFinite(costValue) ? `$${costValue}` : '';
+                      return (
+                        <div
+                          key={d.id}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => resumeDraft(d)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              resumeDraft(d);
+                            }
+                          }}
+                          className="rounded-xl border border-gray-200 bg-white p-4 cursor-pointer hover:border-cyan-300 hover:shadow-sm transition-colors"
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                            <div>
+                              <div className="text-sm font-semibold text-gray-900">{label}</div>
+                              <div className="mt-1 text-xs text-gray-600">Saved: {Number.isFinite(created.getTime()) ? created.toLocaleString() : d.createdAt}</div>
+                              <div className="mt-2 text-sm text-gray-700">{total ? `Subtotal: ${total}` : 'Subtotal: -'}</div>
+                              <div className="mt-1 text-xs text-gray-500">Documents: {Number(d.docCount) || 0}</div>
+                            </div>
+                            <div className="flex flex-col sm:flex-row gap-2">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  resumeDraft(d);
+                                }}
+                                className="inline-flex justify-center rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 transition-colors"
+                              >
+                                Resume
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteDraft(d.id);
+                                }}
+                                className="inline-flex justify-center rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-4 sm:p-6">
+              <FileUploadSection
+                onContinueToSignIn={() => {
+                  setIsLogoutOpen(true);
+                }}
+              />
+            </div>
+          )}
         </div>
       </div>
 
-      <footer className="bg-white text-gray-700 border-t border-gray-200">
+      <footer className="hidden md:block bg-white text-gray-700 border-t border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div>

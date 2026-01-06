@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient';
 
 interface ReceiptHistoryProps {
   onBack: () => void;
+  embed?: boolean; // when true, do not render the component's own header/nav so parent header stays visible
 }
 
 type ReceiptEntry = {
@@ -87,7 +88,7 @@ function extractReceiptPrice(text: string): string | null {
   return null;
 }
 
-export default function ReceiptHistory({ onBack }: ReceiptHistoryProps) {
+export default function ReceiptHistory({ onBack, embed = false }: ReceiptHistoryProps) {
   const [selectedReceiptId, setSelectedReceiptId] = useState<string | null>(null);
   const [receiptCopied, setReceiptCopied] = useState(false);
   const [receiptsVersion, setReceiptsVersion] = useState(0);
@@ -95,6 +96,8 @@ export default function ReceiptHistory({ onBack }: ReceiptHistoryProps) {
   const [receipts, setReceipts] = useState<ReceiptEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [localReceiptsCount, setLocalReceiptsCount] = useState(0);
 
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userKey, setUserKey] = useState<string | null>(null);
@@ -149,6 +152,7 @@ export default function ReceiptHistory({ onBack }: ReceiptHistoryProps) {
     }
 
     const effectiveLocal = localKey ? readLocalReceipts(localKey) : localPendingReceipts;
+    setLocalReceiptsCount(effectiveLocal.length);
     setReceipts(effectiveLocal);
 
     if (!userEmail) {
@@ -210,6 +214,25 @@ export default function ReceiptHistory({ onBack }: ReceiptHistoryProps) {
     };
   }, [userEmail, userKey, receiptsVersion]);
 
+  const syncLocalReceipts = async () => {
+    if (!supabase || !userKey) return;
+    const localKey = `${STORAGE_RECEIPTS_BY_USER_PREFIX}${userKey}`;
+    const local = readLocalReceipts(localKey);
+    if (!local.length) return;
+    setSyncing(true);
+    try {
+      const payload = local.map((r) => ({ user_id: userKey, text: r.text }));
+      const { error } = await supabase.from('receipts').insert(payload);
+      if (error) throw error;
+      writeLocalReceipts(localKey, []);
+      setReceiptsVersion((v) => v + 1);
+    } catch (e) {
+      setLoadError(e instanceof Error ? e.message : 'Failed to sync receipts');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   useEffect(() => {
     try {
       const openId = String(localStorage.getItem('ed_open_receipt_id') ?? '').trim();
@@ -251,26 +274,28 @@ export default function ReceiptHistory({ onBack }: ReceiptHistoryProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-cyan-50/30 to-gray-50">
-      <nav className="bg-white/80 backdrop-blur-md shadow-lg border-b border-gray-200/50 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
-              <img
-                src="/logoclick.png"
-                alt="NORTHLINE"
-                className="h-9 w-auto"
-              />
+      {embed ? null : (
+        <nav className="bg-white/80 backdrop-blur-md shadow-lg border-b border-gray-200/50 sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <div className="flex items-center space-x-3">
+                <img
+                  src="/logoclick.png"
+                  alt="NORTHLINE"
+                  className="h-9 w-auto"
+                />
+              </div>
+              <button
+                onClick={onBack}
+                className="flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-700 hover:text-cyan-600 hover:bg-cyan-50 transition-all duration-200 font-medium"
+              >
+                <ArrowLeft className="w-5 h-5" />
+                <span className="hidden sm:inline">Back to Dashboard</span>
+              </button>
             </div>
-            <button
-              onClick={onBack}
-              className="flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-700 hover:text-cyan-600 hover:bg-cyan-50 transition-all duration-200 font-medium"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span className="hidden sm:inline">Back to Dashboard</span>
-            </button>
           </div>
-        </div>
-      </nav>
+        </nav>
+      )}
 
       {deleteTargetId && (
         <div
@@ -410,7 +435,20 @@ export default function ReceiptHistory({ onBack }: ReceiptHistoryProps) {
             <div className="p-5 sm:p-6 bg-gradient-to-r from-cyan-50 to-cyan-100/50 border-b border-cyan-200/50">
               <div className="flex items-center justify-between gap-4">
                 <div className="text-lg font-bold text-gray-900">All Receipts</div>
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-500 text-xs font-bold text-white shadow-lg shadow-cyan-500/30">{receipts.length}</div>
+                <div className="flex items-center gap-3">
+                  {userEmail && supabase && localReceiptsCount > 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => void syncLocalReceipts()}
+                      disabled={syncing}
+                      className="inline-flex items-center rounded-lg bg-cyan-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-cyan-500 disabled:opacity-60"
+                      title="Upload local receipts to your account"
+                    >
+                      {syncing ? 'Syncing…' : `Sync ${localReceiptsCount} local`}
+                    </button>
+                  ) : null}
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-500 text-xs font-bold text-white shadow-lg shadow-cyan-500/30">{receipts.length}</div>
+                </div>
               </div>
             </div>
 
