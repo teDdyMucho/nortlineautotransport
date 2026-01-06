@@ -425,7 +425,7 @@ export default function HomePage({ onLogin }: HomePageProps) {
                   <div className="text-sm sm:text-base font-semibold text-cyan-300">Technology + Delivery Excellence</div>
                   <div className="mt-2 text-2xl sm:text-3xl md:text-4xl font-bold text-white">Fast, transparent, effortless</div>
                   <div className="mt-3 sm:mt-4 text-sm sm:text-base md:text-lg text-gray-300 leading-relaxed max-w-3xl">
-                    EASYDRIVE Canada provides the instant pricing engine, order intake workflow, and automation --- while Northline Auto Transport's experienced logistics and carrier team fulfills your transportation professionally end-to-end.
+                    EASYDRIVE CANADA provides the instant pricing engine, order intake workflow, and automation- while Northline Auto Transport's experienced logistics and carrier team fulfills your transportation professionally end-to-end.
                   </div>
                 </div>
                 <div className="flex-shrink-0">
@@ -459,7 +459,7 @@ export default function HomePage({ onLogin }: HomePageProps) {
                     <Package className="h-5 w-5 sm:h-6 sm:w-6 text-cyan-600" />
                   </div>
                   <div>
-                    <div className="text-xs sm:text-sm font-semibold text-gray-900">1) Get instant pricing</div>
+                    <div className="text-xs sm:text-sm font-semibold text-gray-900">1 ) Get instant pricing</div>
                     <div className="text-xs sm:text-sm text-gray-600">Book in minutes</div>
                   </div>
                 </div>
@@ -474,7 +474,7 @@ export default function HomePage({ onLogin }: HomePageProps) {
                     <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-cyan-600" />
                   </div>
                   <div>
-                    <div className="text-xs sm:text-sm font-semibold text-gray-900">2) We confirm & dispatch</div>
+                    <div className="text-xs sm:text-sm font-semibold text-gray-900">2 ) We confirm & dispatch</div>
                     <div className="text-xs sm:text-sm text-gray-600">Professional logistics</div>
                   </div>
                 </div>
@@ -489,7 +489,7 @@ export default function HomePage({ onLogin }: HomePageProps) {
                     <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-cyan-600" />
                   </div>
                   <div>
-                    <div className="text-xs sm:text-sm font-semibold text-gray-900">3) Delivered end-to-end</div>
+                    <div className="text-xs sm:text-sm font-semibold text-gray-900">3 ) Delivered end-to-end</div>
                     <div className="text-xs sm:text-sm text-gray-600">Reliable execution</div>
                   </div>
                 </div>
@@ -652,7 +652,7 @@ export default function HomePage({ onLogin }: HomePageProps) {
             </div>
             <div className="text-sm text-gray-600 md:text-right">
               <div>Fast vehicle transport quotes and secure checkout.</div>
-              <div className="mt-1">&copy; {new Date().getFullYear()}Northline Auto Transport. All rights reserved.</div>
+              <div className="mt-1">&copy; {new Date().getFullYear()} Northline Auto Transport. All rights reserved.</div>
             </div>
           </div>
         </div>

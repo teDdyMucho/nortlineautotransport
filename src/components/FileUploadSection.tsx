@@ -2496,8 +2496,8 @@ export default function FileUploadSection({ hideHeader = false, onContinueToSign
                   </>
                 ) : (
                   <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-5">
-                    <div className="text-sm font-semibold text-gray-900">Log in to view price</div>
-                    <div className="mt-1 text-xs text-gray-600">Pricing details are shown after you sign in.</div>
+                    <div className="text-xl font-bold text-gray-900">Log in to view price</div>
+                    <div className="mt-2 text-base text-gray-600">Pricing details are shown after you sign in.</div>
                   </div>
                 )}
               </div>
@@ -2506,12 +2506,6 @@ export default function FileUploadSection({ hideHeader = false, onContinueToSign
                 <div className="text-sm text-gray-700 text-center font-medium">Estimated delivery time</div>
                 <div className="text-sm text-gray-600 text-center mt-1">
                   {String(costData?.pricingCity ?? '').toLowerCase().includes('montreal') ? 'As fast as 1–2 business days' : '3–8 business days'}
-                </div>
-              </div>
-
-              <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                <div className="text-xs text-gray-600 text-center">
-                  Rate: $2.50/km • Minimum: $150
                 </div>
               </div>
             </div>
