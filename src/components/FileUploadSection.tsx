@@ -1039,19 +1039,28 @@ export default function FileUploadSection({ hideHeader = false, onContinueToSign
           getLooseValue(outputObj, 'year', 'vehicle_year', 'vehicleyear')
         )
       ) || extractVehicleYearFromText(rawExtractedText);
-    const vehicleMake = pickFirstString(vehicleObj?.make, getLooseValue(outputObj, 'make'));
-    const vehicleModel = pickFirstString(vehicleObj?.model, getLooseValue(outputObj, 'model'));
-    const vehicleTransmission = pickFirstString(vehicleObj?.transmission, getLooseValue(outputObj, 'transmission'));
+    const vehicleMake = pickFirstString(
+      vehicleObj?.make,
+      getLooseValue(outputObj, 'make', 'vehicle_make')
+    );
+    const vehicleModel = pickFirstString(
+      vehicleObj?.model,
+      getLooseValue(outputObj, 'model', 'vehicle_model')
+    );
+    const vehicleTransmission = pickFirstString(
+      vehicleObj?.transmission,
+      getLooseValue(outputObj, 'transmission', 'vehicle_transmission')
+    );
     const vehicleOdometerRaw = pickFirstString(
       vehicleObj?.odometer_km,
-      getLooseValue(vehicleObj, 'odometer_km', 'odometer', 'odometerkm', 'mileage'),
-      getLooseValue(outputObj, 'odometer_km', 'odometer', 'odometerkm', 'mileage')
+      getLooseValue(vehicleObj, 'odometer_km', 'odometer', 'odometerkm', 'mileage', 'vehicle_odometer'),
+      getLooseValue(outputObj, 'odometer_km', 'odometer', 'odometerkm', 'mileage', 'vehicle_odometer')
     );
     const vehicleOdometerKm = normalizeOdometerKm(vehicleOdometerRaw) || extractOdometerKmFromText(rawExtractedText);
     const vehicleExteriorColor = pickFirstString(
       vehicleObj?.exterior_color,
-      getLooseValue(vehicleObj, 'exterior_color', 'color', 'exteriorcolor'),
-      getLooseValue(outputObj, 'exterior_color', 'color', 'exteriorcolor')
+      getLooseValue(vehicleObj, 'exterior_color', 'color', 'exteriorcolor', 'vehicle_color'),
+      getLooseValue(outputObj, 'exterior_color', 'color', 'exteriorcolor', 'vehicle_color')
     );
 
     const sellingName = pickFirstString(
@@ -1147,7 +1156,10 @@ export default function FileUploadSection({ hideHeader = false, onContinueToSign
         released_by_name: String(releasedByName ?? ''),
         released_to_name: String(releasedToName ?? ''),
       },
-      dealer_notes: readString((output as Record<string, unknown>).dealer_notes),
+      dealer_notes: pickFirstString(
+        (output as Record<string, unknown>).dealer_notes,
+        (output as Record<string, unknown>).pickup_instructions
+      ),
     };
   };
 
